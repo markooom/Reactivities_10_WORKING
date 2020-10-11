@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
-    <UserSecretsId>19a1d757-39fd-4271-8f18-91a0e8479a7f</UserSecretsId>
+    <UserSecretsId>a00df160-8c5b-4f8e-8b74-e8c0b6b989ae</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="3.0.0" />
