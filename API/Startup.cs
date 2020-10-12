@@ -2,6 +2,7 @@
 using API.Middleware;
 using Application.Activities;
 using Application.Interfaces;
+using AutoMapper;
 using Domain;
 using FluentValidation.AspNetCore;
 using Infrastructure.Security;
@@ -11,7 +12,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -33,10 +33,9 @@ namespace API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
-
             services.AddDbContext<DataContext>(opt =>
             {
+                opt.UseLazyLoadingProxies();
                 opt.UseSqlite(Configuration.GetConnectionString("DefaultConnection"));
             });
 
@@ -50,13 +49,22 @@ namespace API
 
             services.AddMediatR(typeof(List.Handler).Assembly);
 
+            services.AddAutoMapper(typeof(List.Handler));
             services.AddControllers(opt =>
             {
                 var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
                 opt.Filters.Add(new AuthorizeFilter(policy));
             })
                 .AddFluentValidation(cfg => cfg.RegisterValidatorsFromAssemblyContaining<Create>());
-            // .SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
+
+            services.AddAuthorization(o =>
+            {
+                o.AddPolicy("IsActivityHost", p =>
+                {
+                    p.Requirements.Add(new IsHostRequirement());
+                });
+            });
+            services.AddTransient<IAuthorizationHandler, IsHostRequirementHandler>();
 
             var builder = services.AddIdentityCore<AppUser>();
             var identityBuilder = new IdentityBuilder(builder.UserType, builder.Services);
@@ -78,6 +86,11 @@ namespace API
 
             services.AddScoped<IJwtGenerator, JwtGenerator>();
             services.AddScoped<IUserAccessor, UserAccessor>();
+
+            services.AddControllersWithViews()
+            .AddNewtonsoftJson(options =>
+                options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+            );
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
